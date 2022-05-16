@@ -1,52 +1,44 @@
 from flask import Flask
 
-import json
+import visualizer
+
+import utils
 
 
 app = Flask(__name__)
 
 
-with open("candidates.json", "r", encoding="utf-8") as file:
-    data = json.load(file)
-
-
 @app.route("/")
-def page_index():
-    page = ""
-    for i in data:
-        page += "Имя кандидата - " + i["name"] + "\n"
-        page += "Позиция кандидата - " + i["position"] + "\n"
-        page += "Навыки через запятую - " + i["skills"] + "\n"
-        page += "\n"
+def page_all_candidates():
+    candidates = utils.candidates_get_all()
+    html_code = visualizer.build_html_for_some_candidates(candidates)
 
-    return "<pre>" + page + "<pre>"
-
-
-@app.route("/candidates/<int:user_id>")
-def page_candidates(user_id):
-    page = ""
-    for i in data:
-        if user_id == i["id"]:
-            page += "Имя кандидата - " + i["name"] + "\n"
-            page += "Позиция кандидата - " + i["position"] + "\n"
-            page += "Навыки через запятую - " + i["skills"] + "\n"
-
-            return "<img src=" + i["picture"] + ">" + "\n" + "<pre>" + page + "</pre>"
+    return html_code
 
 
 @app.route("/skills/<skill>")
-def page_skills(skill):
-    page = ""
-    for i in data:
-        skills_list = i["skills"].split(",")
-        for item in skills_list:
-            if skill == item.lower():
-                page += "Имя кандидата - " + i["name"] + "\n"
-                page += "Позиция кандидата - " + i["position"] + "\n"
-                page += "Навыки через запятую - " + i["skills"] + "\n"
-                page += "\n"
+def page_candidates_by_skill(skill):
+    candidates = utils.candidates_get_by_skill(skill)
 
-    return "<pre>" + page + "<pre>"
+    if len(candidates) == 0:
+
+        return "Таких кандидатов нет"
+
+    html_code = visualizer.build_html_for_some_candidates(candidates)
+
+    return html_code
 
 
-app.run()
+@app.route("/candidates/<int:pk>")
+def page_candidates_by_pk(pk):
+    candidate = utils.candidates_get_by_pk(pk)
+
+    if candidate is None:
+        return "Такого кандидата нет"
+
+    html_code = visualizer.build_html_for_one_candidate(candidate)
+    return html_code
+
+
+if __name__ == "__main__":
+    app.run()
